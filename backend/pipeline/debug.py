@@ -12,6 +12,7 @@ from skimage.segmentation import mark_boundaries
 
 from pipeline.clustering import assign_superpixels, cluster_colors, compute_superpixel_means
 from pipeline.palette import match_palette
+from pipeline.regions import extract_contours, merge_small_regions, simplify_contours
 from pipeline.superpixels import run_slic
 
 ASSETS = Path(__file__).parent.parent / "test_assets"
@@ -56,6 +57,26 @@ def main() -> None:
     clustered_path = ASSETS / "output_clustered.png"
     Image.fromarray(flat_uint8).save(clustered_path)
     print(f"Saved flat-color preview to {clustered_path}")
+
+    min_px = int(os.environ.get("MIN_REGION_PX", 200))
+    print(f"Merging small regions: min_px={min_px}")
+    clean_map = merge_small_regions(region_map, min_px=min_px)
+
+    print("Extracting contours")
+    contours = extract_contours(clean_map)
+    print(f"Found {len(contours)} contours")
+
+    contours = simplify_contours(contours)
+
+    h, w = clean_map.shape
+    canvas = np.full((h, w, 3), 255, dtype=np.uint8)
+    import cv2 as _cv2
+    for c in contours:
+        _cv2.drawContours(canvas, [c.points], -1, (0, 0, 0), 1)
+
+    contours_path = ASSETS / "output_contours.png"
+    Image.fromarray(canvas).save(contours_path)
+    print(f"Saved contours preview to {contours_path}")
 
 
 if __name__ == "__main__":
