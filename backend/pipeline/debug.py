@@ -1,4 +1,4 @@
-"""Debug script: runs SLIC + K-Means clustering and writes preview PNGs to test_assets/."""
+"""Debug script: runs full paint-by-numbers pipeline and writes preview PNGs to test_assets/."""
 import os
 import sys
 from pathlib import Path
@@ -11,8 +11,10 @@ from skimage.color import lab2rgb, rgb2lab
 from skimage.segmentation import mark_boundaries
 
 from pipeline.clustering import assign_superpixels, cluster_colors, compute_superpixel_means
+from pipeline.numbering import place_numbers
 from pipeline.palette import match_palette
 from pipeline.regions import extract_contours, merge_small_regions, simplify_contours
+from pipeline.render import render_png
 from pipeline.superpixels import run_slic
 
 ASSETS = Path(__file__).parent.parent / "test_assets"
@@ -77,6 +79,14 @@ def main() -> None:
     contours_path = ASSETS / "output_contours.png"
     Image.fromarray(canvas).save(contours_path)
     print(f"Saved contours preview to {contours_path}")
+
+    print("Placing region numbers")
+    region_labels = list(range(palette_k))
+    placements = place_numbers(clean_map, region_labels)
+    print(f"Placed numbers on {len(placements)} regions")
+
+    final_path = ASSETS / "output_final.png"
+    render_png(contours, placements, palette_colors, final_path, src_shape=clean_map.shape)
 
 
 if __name__ == "__main__":
