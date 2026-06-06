@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+arq
+scikit-image
+opencv-python-headless
+scikit-learn
+numpy
+Pillow
+python-multipart
+ruff

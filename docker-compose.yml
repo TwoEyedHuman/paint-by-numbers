@@ -1,0 +1,9 @@
+services:
+  backend:
+    build: ./backend
+    command: python pipeline/debug.py
+    env_file:
+      - .env
+    volumes:
+      - ./backend/test_assets:/app/test_assets
+    stop_grace_period: 5s
