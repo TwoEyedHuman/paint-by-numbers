@@ -49,10 +49,9 @@ def main() -> None:
     for i, color in enumerate(palette_colors):
         print(f"  Cluster {i}: {color.name} {color.rgb}")
 
-    centroid_rgb = np.array([
-        [c.rgb[0] / 255, c.rgb[1] / 255, c.rgb[2] / 255]
-        for c in palette_colors
-    ])
+    # Preview uses raw LAB centroids converted to RGB — palette matching
+    # only happens at final render so clustering quality is visible unaltered.
+    centroid_rgb = lab2rgb(centroids_lab.reshape(1, -1, 3)).reshape(-1, 3)
     flat_rgb = centroid_rgb[region_map]
     flat_uint8 = (flat_rgb * 255).clip(0, 255).astype("uint8")
 
