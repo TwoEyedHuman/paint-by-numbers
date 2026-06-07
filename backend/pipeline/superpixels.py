@@ -13,7 +13,7 @@ def run_slic(
     if n_segments is None:
         n_segments = int(os.environ.get("SLIC_N_SEGMENTS", 1000))
     if compactness is None:
-        compactness = float(os.environ.get("SLIC_COMPACTNESS", 10))
+        compactness = float(os.environ.get("SLIC_COMPACTNESS", 1.0))
 
     lab = rgb2lab(image_array)
     return slic(lab, n_segments=n_segments, compactness=compactness, channel_axis=-1, convert2lab=False)

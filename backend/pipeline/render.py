@@ -53,8 +53,9 @@ def render_png(
     else:
         src_w, src_h = out_w, paint_h
 
-    scale_x = out_w / src_w
-    scale_y = paint_h / src_h
+    scale = min(out_w / src_w, paint_h / src_h)
+    off_x = (out_w - src_w * scale) / 2
+    off_y = (paint_h - src_h * scale) / 2
 
     canvas = Image.new("RGB", (out_w, out_h), (255, 255, 255))
     draw = ImageDraw.Draw(canvas)
@@ -63,7 +64,7 @@ def render_png(
         if len(c.points) < 2:
             continue
         pts = c.points.reshape(-1, 2)
-        scaled = [(int(p[0] * scale_x), int(p[1] * scale_y)) for p in pts]
+        scaled = [(int(p[0] * scale + off_x), int(p[1] * scale + off_y)) for p in pts]
         if len(scaled) >= 2:
             draw.polygon(scaled, outline=(0, 0, 0))
 
@@ -73,8 +74,8 @@ def render_png(
         max_fs = max(36, out_w // 70)
 
         for placement in number_placements:
-            sx = int(placement.x * scale_x)
-            sy = int(placement.y * scale_y)
+            sx = int(placement.x * scale + off_x)
+            sy = int(placement.y * scale + off_y)
             ratio = math.sqrt(placement.area / max_area)
             font_size = int(min_fs + ratio * (max_fs - min_fs))
             font = _load_font(font_size)

@@ -30,6 +30,7 @@ _APPLE_BARREL_COLORS: list[tuple[str, int, int, int]] = [
     ("Leaf Green", 67, 130, 61),
     ("Sky Blue", 135, 206, 235),
     ("Mauve", 189, 141, 174),
+    ("Cerulean", 40, 130, 200),
 ]
 
 
@@ -54,8 +55,35 @@ _TABLE = _build_table()
 
 def match_palette(centroids_lab: np.ndarray) -> list[AppleBarrelColor]:
     table_lab = np.array([c.lab for c in _TABLE])
-    matches = []
-    for centroid in centroids_lab:
-        dists = np.linalg.norm(table_lab - centroid, axis=1)
-        matches.append(_TABLE[int(np.argmin(dists))])
-    return matches
+    n = len(centroids_lab)
+
+    # Downweight L (lightness) relative to a*/b* (chroma/hue) so that
+    # hue-wrong colors (e.g. Lavender) don't beat hue-correct ones on lightness alone.
+    _W = np.array([0.5, 1.5, 1.5])
+
+    # cost[i, j] = weighted LAB distance from cluster i to palette color j
+    cost = np.linalg.norm(
+        (table_lab[None, :, :] - centroids_lab[:, None, :]) * _W, axis=2
+    )
+
+    # Greedy unique assignment: sort all (cluster, color) pairs by distance,
+    # assign each cluster to its nearest unassigned palette color.
+    pairs = sorted(
+        ((cost[ci, pi], ci, pi) for ci in range(n) for pi in range(len(_TABLE))),
+        key=lambda x: x[0],
+    )
+
+    assignments: list[int] = [-1] * n
+    assigned_clusters: set[int] = set()
+    used_palette: set[int] = set()
+
+    for _, ci, pi in pairs:
+        if ci in assigned_clusters or pi in used_palette:
+            continue
+        assignments[ci] = pi
+        assigned_clusters.add(ci)
+        used_palette.add(pi)
+        if len(assigned_clusters) == n:
+            break
+
+    return [_TABLE[i] for i in assignments]

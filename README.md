@@ -9,9 +9,10 @@
 3. [Technology Stack](#technology-stack)
 4. [Environment Strategy](#environment-strategy)
 5. [Pre-Flight Checklist](#pre-flight-checklist)
-6. [Implementation Stories](#implementation-stories)
-7. [Secrets & Config Management](#secrets--config-management)
-8. [Definition of Done](#definition-of-done)
+6. [Makefile Reference](#makefile-reference)
+7. [Implementation Stories](#implementation-stories)
+8. [Secrets & Config Management](#secrets--config-management)
+9. [Definition of Done](#definition-of-done)
 
 ---
 
@@ -159,6 +160,33 @@ test -f .env && echo "✓ .env found" || echo "✗ copy .env.example to .env"
 If Docker DNS fails: `sudo systemctl restart docker` then re-run.
 
 > **Ctrl+C not responding?** If `docker compose up` hangs on stop, your services are missing `stop_grace_period`. All services in `docker-compose.yml` should have `stop_grace_period: 5s`.
+
+---
+
+## Makefile Reference
+
+### Targets
+
+| Target | What it does |
+|---|---|
+| `make debug` | Run `pipeline/debug.py` end-to-end inside the backend container with the pipeline params below |
+| `make build` | Build the backend Docker image |
+
+### Parameters (override on the command line: `make debug SEGMENTS=500`)
+
+| Variable | Default | Env var injected | Description |
+|---|---|---|---|
+| `SEGMENTS` | `1000` | `SLIC_N_SEGMENTS` | Number of SLIC superpixels. Lower = coarser regions, faster. |
+| `COMPACTNESS` | `1.0` | `SLIC_COMPACTNESS` | SLIC compactness. Higher = more square superpixels, less shape-following. |
+| `PALETTE_K` | `12` | `PALETTE_K` | Number of K-Means color clusters (paint colors). Range 10–15. |
+| `MIN_REGION_PX` | `200` | `MIN_REGION_PX` | Regions smaller than this (px) are merged into their largest neighbor. |
+| `MIN_LABEL_PX` | `500` | `MIN_LABEL_PX` | Regions smaller than this (px) get no number label in the final render. |
+
+Example — run with 10 colors and coarser regions:
+
+```bash
+make debug PALETTE_K=10 MIN_REGION_PX=500
+```
 
 ---
 
