@@ -26,9 +26,13 @@ def main() -> None:
     image_array = np.array(img)
 
     max_px = int(os.environ.get("DOWNSAMPLE_MAX_PX", 800))
+    orig_h, orig_w = image_array.shape[:2]
     image_array = downsample(image_array, max_px=max_px)
     h, w = image_array.shape[:2]
-    print(f"Downsampled to {w}x{h} (max_px={max_px})")
+    if (w, h) != (orig_w, orig_h):
+        print(f"Downsampled {orig_w}x{orig_h} → {w}x{h} (max_px={max_px})")
+    else:
+        print(f"No downsample needed: {w}x{h} already within max_px={max_px}")
 
     n_segments = int(os.environ.get("SLIC_N_SEGMENTS", 1000))
     palette_k = int(os.environ.get("PALETTE_K", 12))
@@ -73,7 +77,9 @@ def main() -> None:
     contours = extract_contours(clean_map)
     print(f"Found {len(contours)} contours")
 
-    contours = simplify_contours(contours)
+    smooth_s = float(os.environ.get("CONTOUR_SMOOTH_S", 10.0))
+    print(f"Smoothing contours: smooth_s={smooth_s}")
+    contours = simplify_contours(contours, smooth_s=smooth_s)
 
     h, w = clean_map.shape
     canvas = np.full((h, w, 3), 255, dtype=np.uint8)
@@ -84,6 +90,18 @@ def main() -> None:
     contours_path = ASSETS / "output_contours.png"
     Image.fromarray(canvas).save(contours_path)
     print(f"Saved contours preview to {contours_path}")
+
+    preview_bgr = np.full((h, w, 3), 255, dtype=np.uint8)
+    sorted_contours = sorted(contours, key=lambda c: _cv2.contourArea(c.points), reverse=True)
+    for c in sorted_contours:
+        r, g, b = palette_colors[c.label].rgb
+        _cv2.drawContours(preview_bgr, [c.points], -1, (b, g, r), _cv2.FILLED)
+    for c in contours:
+        _cv2.drawContours(preview_bgr, [c.points], -1, (0, 0, 0), 1)
+    preview_rgb = _cv2.cvtColor(preview_bgr, _cv2.COLOR_BGR2RGB)
+    preview_path = ASSETS / "output_preview.png"
+    Image.fromarray(preview_rgb).save(preview_path)
+    print(f"Saved colored preview to {preview_path}")
 
     print("Placing region numbers")
     region_labels = list(range(palette_k))

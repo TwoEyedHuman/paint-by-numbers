@@ -181,6 +181,8 @@ If Docker DNS fails: `sudo systemctl restart docker` then re-run.
 | `PALETTE_K` | `12` | `PALETTE_K` | Number of K-Means color clusters (paint colors). Range 10–15. |
 | `MIN_REGION_PX` | `200` | `MIN_REGION_PX` | Regions smaller than this (px) are merged into their largest neighbor. |
 | `MIN_LABEL_PX` | `500` | `MIN_LABEL_PX` | Regions smaller than this (px) get no number label in the final render. |
+| `DOWNSAMPLE_MAX_PX` | `800` | `DOWNSAMPLE_MAX_PX` | Input image is downsampled so its longest side is at most this many pixels before any processing. |
+| `SMOOTH_S` | `10.0` | `CONTOUR_SMOOTH_S` | B-spline smoothing factor per contour point. Higher = smoother curves, less faithful to region edges. `0` = interpolate exactly. |
 
 Example — run with 10 colors and coarser regions:
 

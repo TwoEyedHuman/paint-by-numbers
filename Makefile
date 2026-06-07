@@ -4,6 +4,7 @@ COMPACTNESS ?= 1.0
 MIN_REGION_PX ?= 200
 MIN_LABEL_PX ?= 500
 DOWNSAMPLE_MAX_PX ?= 800
+SMOOTH_S ?= 10.0
 
 DC = docker compose
 
@@ -27,6 +28,7 @@ debug:
 		-e PALETTE_K=$(PALETTE_K) \
 		-e MIN_REGION_PX=$(MIN_REGION_PX) \
 		-e MIN_LABEL_PX=$(MIN_LABEL_PX) \
+		-e CONTOUR_SMOOTH_S=$(SMOOTH_S) \
 		backend python pipeline/debug.py
 
 build:
@@ -44,6 +46,7 @@ tune:
 				-e PALETTE_K=$$k \
 				-e MIN_REGION_PX=$(MIN_REGION_PX) \
 				-e MIN_LABEL_PX=$(MIN_LABEL_PX) \
+				-e CONTOUR_SMOOTH_S=$(SMOOTH_S) \
 				backend python pipeline/debug.py; \
 			cp backend/test_assets/output_clustered.png \
 				tmp/seg$${seg}_k$${k}.png; \
@@ -71,6 +74,7 @@ tune2:
 				-e PALETTE_K=$(TUNE2_K) \
 				-e MIN_REGION_PX=$$minpx \
 				-e MIN_LABEL_PX=$(MIN_LABEL_PX) \
+				-e CONTOUR_SMOOTH_S=$(SMOOTH_S) \
 				backend python pipeline/debug.py; \
 			cp backend/test_assets/output_clustered.png \
 				tmp2/comp$${comp}_minpx$${minpx}.png; \

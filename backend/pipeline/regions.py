@@ -51,11 +51,36 @@ def extract_contours(region_map: np.ndarray) -> list[Contour]:
     return contours
 
 
-def simplify_contours(contours: list[Contour], epsilon_factor: float = 0.002) -> list[Contour]:
-    simplified: list[Contour] = []
+def simplify_contours(
+    contours: list[Contour],
+    smooth_s: float | None = None,
+    smooth_k: int = 3,
+    n_out: int = 80,
+) -> list[Contour]:
+    from scipy.interpolate import splev, splprep
+
+    if smooth_s is None:
+        smooth_s = float(os.environ.get("CONTOUR_SMOOTH_S", 10.0))
+
+    result: list[Contour] = []
     for c in contours:
-        arc = cv2.arcLength(c.points, closed=True)
-        epsilon = epsilon_factor * arc
-        approx = cv2.approxPolyDP(c.points, epsilon, closed=True)
-        simplified.append(Contour(label=c.label, points=approx))
-    return simplified
+        xy = c.points[:, 0, :]  # (N, 2) — raw pixel-boundary points
+        n = len(xy)
+
+        if n < smooth_k + 1:
+            result.append(c)
+            continue
+
+        x, y = xy[:, 0].astype(float), xy[:, 1].astype(float)
+
+        try:
+            tck, _ = splprep([x, y], s=smooth_s * n, k=smooth_k, per=True)
+            t_new = np.linspace(0, 1, max(n_out, n // 4), endpoint=False)
+            sx, sy = splev(t_new, tck)
+            smooth_pts = np.round(np.stack([sx, sy], axis=1)).astype(np.int32)
+            smooth_pts = smooth_pts[:, np.newaxis, :]  # (N, 1, 2)
+            result.append(Contour(label=c.label, points=smooth_pts))
+        except Exception:
+            result.append(c)
+
+    return result
