@@ -3,6 +3,7 @@ PALETTE_K ?= 12
 COMPACTNESS ?= 1.0
 MIN_REGION_PX ?= 200
 MIN_LABEL_PX ?= 500
+DOWNSAMPLE_MAX_PX ?= 800
 
 DC = docker compose
 
@@ -20,6 +21,7 @@ TUNE2_K           := 12
 
 debug:
 	$(DC) run --rm \
+		-e DOWNSAMPLE_MAX_PX=$(DOWNSAMPLE_MAX_PX) \
 		-e SLIC_N_SEGMENTS=$(SEGMENTS) \
 		-e SLIC_COMPACTNESS=$(COMPACTNESS) \
 		-e PALETTE_K=$(PALETTE_K) \
@@ -36,6 +38,7 @@ tune:
 		for k in $(TUNE_K); do \
 			printf "\n=== seg=$$seg k=$$k ===\n"; \
 			$(DC) run --rm \
+				-e DOWNSAMPLE_MAX_PX=$(DOWNSAMPLE_MAX_PX) \
 				-e SLIC_N_SEGMENTS=$$seg \
 				-e SLIC_COMPACTNESS=$(COMPACTNESS) \
 				-e PALETTE_K=$$k \
@@ -62,6 +65,7 @@ tune2:
 		for minpx in $(TUNE_MIN_REGION); do \
 			printf "\n=== comp=$$comp minpx=$$minpx ===\n"; \
 			$(DC) run --rm \
+				-e DOWNSAMPLE_MAX_PX=$(DOWNSAMPLE_MAX_PX) \
 				-e SLIC_N_SEGMENTS=$(TUNE2_SEGMENTS) \
 				-e SLIC_COMPACTNESS=$$comp \
 				-e PALETTE_K=$(TUNE2_K) \

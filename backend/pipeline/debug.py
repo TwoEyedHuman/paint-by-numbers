@@ -11,6 +11,7 @@ from skimage.color import lab2rgb, rgb2lab
 from skimage.segmentation import mark_boundaries
 
 from pipeline.clustering import assign_superpixels, cluster_colors, compute_superpixel_means
+from pipeline.downsample import downsample
 from pipeline.numbering import place_numbers
 from pipeline.palette import match_palette
 from pipeline.regions import extract_contours, merge_small_regions, simplify_contours
@@ -23,6 +24,11 @@ ASSETS = Path(__file__).parent.parent / "test_assets"
 def main() -> None:
     img = Image.open(ASSETS / "sample.jpg").convert("RGB")
     image_array = np.array(img)
+
+    max_px = int(os.environ.get("DOWNSAMPLE_MAX_PX", 800))
+    image_array = downsample(image_array, max_px=max_px)
+    h, w = image_array.shape[:2]
+    print(f"Downsampled to {w}x{h} (max_px={max_px})")
 
     n_segments = int(os.environ.get("SLIC_N_SEGMENTS", 1000))
     palette_k = int(os.environ.get("PALETTE_K", 12))
